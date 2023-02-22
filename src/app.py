@@ -43,7 +43,7 @@ def handle_hello():
     
 ##querys o consultas
     users_query = User.query.all()
-    ##print(users_query)
+    
     results = list(map(lambda item: item.serialize(),users_query))
 
 
@@ -59,7 +59,7 @@ def get_info_user(user_id):
     user = User.query.filter_by(id=user_id).first()
 
 #  ##querys o consultas
-  
+
 
     response_body = {
         "msg": "okk",
@@ -68,6 +68,28 @@ def get_info_user(user_id):
 
     return jsonify(response_body), 200
 
+@app.route('/user', methods=['POST'])
+def create_user():
+    request_body = request.json
+    print(request_body["email"])
+    
+
+    #user_query = User.query.filter_by(email=request_body["email"]).first()
+
+    # if user_query is None:
+    user = User(email=request_body["email"], password=request_body["password"])
+    db.session.add(user)
+    db.session.commit()
+
+    response_body = {
+            "msg": "el susuario ",
+            #"result": user_query.serialize()
+        }
+
+    return jsonify(response_body), 200
+    # else:
+    #     return jsonify({"msg":"Usuario ya existe"}), 400
+
 #personajes
 
 @app.route('/personaje', methods=['GET'])
@@ -75,7 +97,7 @@ def hola_hola():
     
 ##querys o consultas
     personajes_query = Personaje.query.all()
-    ##print(users_query)
+    
     results = list(map(lambda item: item.serialize(),personajes_query))
 
 
@@ -100,6 +122,28 @@ def get_info_personaje(personaje_id):
 
     return jsonify(response_body), 200
 
+@app.route('/personaje', methods=['POST'])
+def create_personaje():
+    request_body = request.json
+    print(request_body["nombre"])
+    
+
+    #user_query = User.query.filter_by(email=request_body["email"]).first()
+
+    # if user_query is None:
+    personaje = Personaje(nombre=request_body["nombre"], altura=request_body["altura"], genero=request_body["genero"], peso=request_body["peso"])
+    db.session.add(personaje)
+    db.session.commit()
+
+    response_body = {
+            "msg": "el personaje",
+            #"result": user_query.serialize()
+        }
+
+    return jsonify(response_body), 200
+    # else:
+    #     return jsonify({"msg":"Usuario ya existe"}), 400
+
 #planetas
 
 @app.route('/planetas', methods=['GET'])
@@ -107,7 +151,7 @@ def mundo_mundo():
     
 ##querys o consultas
     planetas_query = Planetas.query.all()
-    ##print(users_query)
+    
     results = list(map(lambda item: item.serialize(),planetas_query))
 
 
