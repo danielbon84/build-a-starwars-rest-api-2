@@ -8,11 +8,19 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
-from models import db, User, Personaje, Planetas
+from models import db, User, Personaje, Planeta, Favoritos
 #from models import Person
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
+
+# Setup the Flask-JWT-Extended extension
+app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
+jwt = JWTManager(app)
 
 db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
@@ -24,6 +32,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db)
 db.init_app(app)
 CORS(app)
+
 setup_admin(app)
 
 # Handle/serialize errors like a JSON object
@@ -96,7 +105,7 @@ def create_user():
 def hola_hola():
     
 ##querys o consultas
-    personajes_query = Personaje.query.all()
+    personaje_query = Personaje.query.all()
     
     results = list(map(lambda item: item.serialize(),personajes_query))
 
@@ -105,6 +114,8 @@ def hola_hola():
         "msg": "okok",
         "results": results
     }
+    
+    
     return jsonify(response_body), 200
 
 #obtiene los datos de un usuario
@@ -128,7 +139,7 @@ def create_personaje():
     print(request_body["nombre"])
     
 
-    #user_query = User.query.filter_by(email=request_body["email"]).first()
+    #personaje_query = Personaje.query.filter_by(nombre=request_body["nombre"]).first()
 
     # if user_query is None:
     personaje = Personaje(nombre=request_body["nombre"], altura=request_body["altura"], genero=request_body["genero"], peso=request_body["peso"])
@@ -144,37 +155,135 @@ def create_personaje():
     # else:
     #     return jsonify({"msg":"Usuario ya existe"}), 400
 
-#planetas
+#planeta
 
-@app.route('/planetas', methods=['GET'])
+@app.route('/planeta', methods=['GET'])
 def mundo_mundo():
     
 ##querys o consultas
-    planetas_query = Planetas.query.all()
+    planeta_query = Planeta.query.all()
     
-    results = list(map(lambda item: item.serialize(),planetas_query))
+    results = list(map(lambda item: item.serialize(),planeta_query))
 
 
     response_body = {
-        "msg": "ok",
+        "msg": "okokok",
         "results": results
     }
     return jsonify(response_body), 200
 
 #obtiene los datos de un usuario
-@app.route('/planetas/<int:planetas_id>', methods=['GET'])
-def get_info_planetas(planetas_id):
-    planetas = Planetas.query.filter_by(id=planetas_id).first()
+@app.route('/planeta/<int:planeta_id>', methods=['GET'])
+def get_info_planeta(planeta_id):
+    planeta = Planeta.query.filter_by(id=planeta_id).first()
 
 #  ##querys o consultas
   
 
     response_body = {
-        "msg": "okk",
-        "result": planetas.serialize()
+        "msg": "okkkk",
+        "result": planeta.serialize()
     }
 
     return jsonify(response_body), 200
+
+#post
+
+@app.route('/planeta', methods=['POST'])
+def create_planeta():
+    request_body = request.json
+    print(request_body["nombre"])
+
+    planeta = Planeta(nombre=request_body["nombre"], diametro=request_body["diametro"], periodo_orbital=request_body["periodo_orbital"], poblacion=request_body["poblacion"])
+    db.session.add(planeta)
+    db.session.commit()
+    
+    response_body = {
+            "msg": "el planeta",
+            #"result": user_query.serialize()
+        }
+
+    return jsonify(response_body), 200
+
+    # else:
+    #     return jsonify({"msg":"Usuario ya existe"}), 400
+    
+#favoritos
+
+@app.route('/favoritos', methods=['GET'])
+def favoritos_todos():
+    
+##querys o consultas
+    favoritos_query = Favoritos.query.all()
+    
+    results = list(map(lambda item: item.serialize(),favoritos_query))
+
+
+    response_body = {
+        "msg": "yesss",
+        "results": results
+    }
+    return jsonify(response_body), 200
+
+#obtiene los datos de un usuario
+@app.route('/favoritos/<int:favoritos_id>', methods=['GET'])
+def get_info_favoritos(favoritos_id):
+    favoritos = Favoritos.query.filter_by(id=favoritos_id).first()
+
+#  ##querys o consultas
+  
+
+    response_body = {
+        "msg": "okkkk",
+        "result": favoritos.serialize()
+    }
+
+    return jsonify(response_body), 200
+
+#post
+
+@app.route('/favoritos', methods=['POST'])
+def create_favoritos():
+    request_body = request.json
+    print(request_body[""])
+
+    favoritos = Favoritos(nombre=request_body[""])
+    db.session.add(favoritos)
+    db.session.commit()
+    
+    response_body = {
+            "msg": "el planeta",
+            #"result": user_query.serialize()
+        }
+
+    return jsonify(response_body), 200
+
+    # else:
+    #     return jsonify({"msg":"Usuario ya existe"}), 400
+
+    
+@app.route("/profile", methods=["GET"])
+@jwt_required()
+def get_profile():
+    # Access the identity of the current user with get_jwt_identity
+
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(email=current_user).first()
+    print(user)
+    return jsonify({"result":user.serialize()}), 200
+    
+    
+@app.route("/login", methods=["POST"])
+def login():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+    user = User.query.filter_by(email=email).first()
+    print(user)
+    if email != "test" or password != "test":
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    access_token = create_access_token(identity=email)
+    return jsonify(access_token=access_token)
 
 
 
